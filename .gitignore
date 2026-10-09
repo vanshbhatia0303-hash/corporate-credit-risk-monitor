@@ -218,3 +218,12 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+*.duckdb
+*.duckdb.wal
+.dlt/secrets.toml
+.env
+target/
+dbt_packages/
+logs/
+node_modules/
+.evidence/
