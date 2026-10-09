@@ -227,3 +227,4 @@ dbt_packages/
 logs/
 node_modules/
 .evidence/
+.user.yml
