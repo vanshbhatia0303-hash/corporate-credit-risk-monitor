@@ -22,7 +22,7 @@ cand as (
 select cik, period_end, 'LongTermDebt' as m, ltd as v from bal
 union all select cik, period_end, 'LongTermDebtAndCapitalLeaseObligationsIncludingCurrent', ltd_cl_incl from bal
 union all select cik, period_end, 'DebtAndCapitalLeaseObligations', debt_cap_lease from bal
-union all select cik, period_end, 'SeniorNotes+LineOfCredit+Secured+Unsecured', coalesce(senior_notes, lag(senior_notes, 1) over w, lag(senior_notes, 2) over w) + coalesce(line_of_credit, 0) + coalesce(secured, 0) + coalesce(unsecured, 0) from bal window w as (partition by cik order by period_end)
+union all select cik, period_end, 'SeniorNotes+LineOfCredit+Secured+Unsecured', coalesce(senior_notes, lag(senior_notes, 1) over w, lag(senior_notes, 2) over w, lag(senior_notes, 3) over w) + coalesce(line_of_credit, 0) + coalesce(secured, 0) + coalesce(unsecured, 0) from bal window w as (partition by cik order by period_end)
 union all select cik, period_end, 'Secured+Unsecured', coalesce(secured, 0) + coalesce(unsecured, 0) from bal where secured is not null or unsecured is not null
 union all select cik, period_end, 'NotesAndLoansPayable', notes_loans from bal
 union all select cik, period_end, 'DebtInstrumentCarryingAmount', debt_carrying from bal
@@ -52,4 +52,5 @@ case when debt_raw is null then null when debt_raw < 0.03 * total_assets then 'r
 case when depreciation_amortization is null then null when operating_income is not null then operating_income + depreciation_amortization when pretax_income is not null and interest_expense is not null then pretax_income + interest_expense + depreciation_amortization when net_income is not null and interest_expense is not null then net_income + coalesce(income_tax, 0) + interest_expense + depreciation_amortization end as ebitda,
 case when depreciation_amortization is null then null when operating_income is not null then 'operating_income+da' when pretax_income is not null and interest_expense is not null then 'pretax+interest+da' when net_income is not null and interest_expense is not null then case when income_tax is null then 'net_income+interest+da (tax=0)' else 'net_income+tax+interest+da' end end as ebitda_method
 from j
+
 
