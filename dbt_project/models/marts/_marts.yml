@@ -1,0 +1,17 @@
+﻿version: 2
+models:
+  - name: fct_credit_metrics_quarterly
+    columns:
+      - name: quarter_id
+        data_tests: [unique, not_null]
+      - name: cik
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_companies')
+                field: cik
+  - name: mart_stress_ranking
+    columns:
+      - name: cik
+        data_tests: [unique, not_null]
