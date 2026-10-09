@@ -1,0 +1,40 @@
+﻿version: 2
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: companies
+      - name: facts
+      - name: filings
+models:
+  - name: stg_companies
+    columns:
+      - name: cik
+        data_tests: [unique, not_null]
+      - name: ticker
+        data_tests: [unique, not_null]
+  - name: stg_facts
+    columns:
+      - name: fact_id
+        data_tests: [unique, not_null]
+      - name: cik
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_companies')
+                field: cik
+      - name: period_end
+        data_tests: [not_null]
+      - name: val
+        data_tests: [not_null]
+  - name: stg_filings
+    columns:
+      - name: filing_key
+        data_tests: [unique, not_null]
+      - name: cik
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_companies')
+                field: cik
