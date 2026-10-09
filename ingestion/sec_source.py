@@ -25,4 +25,9 @@ def facts(co):
   for r in d.get(c, {}).get("units", {}).get("USD", []):
    if r["form"] in FORMS: yield {"fact_key": f"{co['cik']}|{c}|{r.get('start','')}|{r['end']}|{r['accn']}", "cik": co["cik"], "ticker": co["ticker"], "concept": c, "period_start": r.get("start"), "period_end": r["end"], "val": r["val"], "accn": r["accn"], "fy": r.get("fy"), "fp": r.get("fp"), "form": r["form"], "filed": r["filed"], "frame": r.get("frame")}
 @dlt.source(name="sec_edgar")
-def sec_edgar(): return companies, facts
+def sec_edgar(): return companies, facts, filings
+@dlt.transformer(data_from=companies, name="filings", write_disposition="merge", primary_key="filing_key")
+def filings(co):
+ f = get(f"https://data.sec.gov/submissions/CIK{int(co['cik']):010d}.json")["filings"]["recent"]
+ for fm, a, d, r in zip(f["form"], f["accessionNumber"], f["filingDate"], f["reportDate"]):
+  if fm in FORMS: yield {"filing_key": f"{co['cik']}|{a}", "accn": a, "cik": co["cik"], "ticker": co["ticker"], "form": fm, "filing_date": d, "report_date": r}
