@@ -1,0 +1,6 @@
+services:
+  scheduler:
+    volumes:
+      - "C:/Users/Vansh/OneDrive/Documents/Data Engineering/corporate-credit-risk-monitor/ingestion:/usr/local/airflow/ingestion"
+      - "C:/Users/Vansh/OneDrive/Documents/Data Engineering/corporate-credit-risk-monitor/dbt_project:/usr/local/airflow/dbt_project"
+      - "C:/dev/warehouse:/usr/local/airflow/warehouse"
