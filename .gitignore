@@ -228,3 +228,4 @@ logs/
 node_modules/
 .evidence/
 .user.yml
+!evidence/sources/credit/credit.duckdb

@@ -1,0 +1,11 @@
+﻿import os, duckdb
+src = os.environ.get("WAREHOUSE_PATH", "warehouse.duckdb")
+dst = os.path.join("evidence", "sources", "credit", "credit.duckdb")
+if os.path.exists(dst): os.remove(dst)
+c = duckdb.connect(dst)
+c.sql(f"attach '{src}' as w (read_only)")
+c.sql("create table stress_ranking as select * from w.marts.mart_stress_ranking")
+c.sql("create table metrics_quarterly as select quarter_id, ticker, company_name, subsector, period_end, total_debt, debt_method, ebitda, ebitda_method, interest_expense, debt_to_ebitda, interest_coverage from w.marts.fct_credit_metrics_quarterly where period_end >= date '2022-01-01'")
+c.sql("create table snapshot_meta as select now() as exported_at, (select max(latest_period) from stress_ranking) as latest_period")
+print(c.sql("select (select count(*) from stress_ranking) ranking_rows, (select count(*) from metrics_quarterly) metric_rows").fetchall())
+c.close()
