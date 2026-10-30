@@ -1,2 +1,5 @@
 .evidence/
 connection.yaml
+
+# keep the DuckDB source definition (contains no secrets)
+!sources/**/connection.yaml
