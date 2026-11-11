@@ -101,14 +101,13 @@ select * from ${filtered} order by stress_rank nulls last, company_name
 
 ## Analyst commentary
 
-*Written on the <Value data={meta} column=exported /> snapshot; refresh the commentary when the data is refreshed.*
+*Written on the 12 Nov 2026 snapshot; refresh it whenever the data is refreshed.*
 
-- **Stress is concentrated, not broad.** Twelve of 43 ranked names are flagged as drifting, but most of those moves are small. Only **ARE** (Debt/EBITDA 7.9x to 25.8x, coverage 10.0x to 2.0x) and **PK** (4.5x to 12.0x, coverage 4.1x to 1.6x) combine a large leverage increase with coverage below 2.5x. Those two are where covenant conversations are most likely.
-- **Rank is relative, risk is absolute.** The stress score ranks trends against peers. **PSA** ranks 4th, yet sits at 3.1x leverage with about 10x coverage, a comfortable cushion that is only drifting slightly. Read the *Risk level* column next to the rank.
-- **Treat ARE's number as a flag, not a verdict.** Its EBITDA is built from net income, which includes impairment charges, so the jump to 25.8x is probably overstated. It deserves a closer look rather than a conclusion.
-- **Mid-pack names worth watching:** **MAA**, **DOC**, **CUZ**, **HIW** and **ADC** are all drifting the wrong way, but from healthy starting points. The early-warning value is in seeing them move before a rating agency does.
-- **Data freshness matters.** Thirteen companies (nine of them ranked) have filed a Q2 2026 10-Q that SEC's structured-data API has not yet published, so their ratios are as of Q1 2026 (see *Data status* below).
-
+- **Stress is gradual, not acute.** After adjusting for impairments, no company combines a large leverage jump with collapsing coverage. The highest stress scores belong to sound balance sheets drifting slowly: **PSA** (Debt/EBITDA 2.7x to 3.9x), **MAA** (3.7x to 4.7x) and **HIW** (3.7x to 4.3x).
+- **Absolute level matters as much as trend.** **DEI** has the highest leverage among ranked names (8.9x, with coverage of 2.4x) and is edging the wrong way (8.7x to 8.9x). It is the clearest *High* risk-level name. **PK** (6.0x to 6.8x, coverage 3.0x to 2.8x) is *Elevated* and worth watching.
+- **Why the EBITDA adjustment exists.** Before adding back impairments, **ARE** showed 160x leverage and **REXR** 149x. Those were accounting charges (about $2.2B of impairment at ARE, $625M at REXR in one quarter), not liquidity stress. The model now adds impairments back and removes gains on property sales, in the spirit of Nareit's EBITDAre.
+- **Rank is relative, risk is absolute.** The stress score ranks trends against peers, so read *Risk level* next to the rank.
+- **Data freshness matters.** Some companies have filed a newer 10-Q that SEC's structured-data API has not yet published, so their ratios are one quarter old (see *Data status* below).
 ## Where everyone sits
 
 ```sql scatter
@@ -171,7 +170,7 @@ order by data_status, company_name
 | **Data status** | *Ranked, up to date*: latest filing is reflected. *Ranked, awaiting SEC data*: the company has filed a newer 10-Q, but SEC has not yet published its structured figures, so ratios are one quarter old. *Not ranked*: too little recent history or a missing input. |
 | **Why** | The plain-English reason behind any status other than "up to date". |
 | **Latest quarter with ratios / filed with SEC** | The most recent quarter we could compute ratios for, versus the most recent quarter the company has filed. A gap between them is the freshness issue. |
-| **EBITDA built from** | SEC filings have no EBITDA line, so it is derived. Preferred: operating income + D&A. Fallbacks: pre-tax income + interest + D&A, or net income + (tax) + interest + D&A. The fallbacks include one-off gains and impairments, so they are less clean. |
+| **EBITDA built from** | SEC filings have no EBITDA line, so it is derived. Preferred: operating income + D&A. Fallbacks: pre-tax income + interest + D&A, or net income + (tax) + interest + D&A. Every method adds back real-estate impairment charges, and the net-income and pre-tax methods also remove gains on property sales (an EBITDAre-style adjustment). Impairment and gain tags are not reported consistently across companies, so some one-offs can remain. |
 | **Total debt** | The largest of the debt tags a company reports (long-term debt, notes, secured plus unsecured, etc.), rejected if under 3% of assets. Debt components never exceed their total, so taking the largest avoids undercounting. |
 | **Trailing four quarters (TTM)** | The sum of the latest four quarters, which smooths seasonality. A ratio needs four consecutive quarters of data. |
 
