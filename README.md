@@ -1,5 +1,7 @@
 # Corporate Credit Risk Monitor
 
+[![CI](https://github.com/vanshbhatia0303-hash/corporate-credit-risk-monitor/actions/workflows/ci.yml/badge.svg)](https://github.com/vanshbhatia0303-hash/corporate-credit-risk-monitor/actions/workflows/ci.yml)
+
 **Which public REITs are drifting toward covenant stress, before a rating downgrade shows it?**
 
 An end-to-end data pipeline that turns SEC EDGAR XBRL filings into an early-warning dashboard: it tracks leverage (Debt/EBITDA) and interest coverage over each company's last eight reported quarters, for 50 US-listed REITs across 12 sub-sectors.
@@ -96,6 +98,8 @@ astro dev start                       # UI at the URL printed (port may vary)
 - **Debt method stability:** flags companies whose debt tag switches inside the trend window.
 - **Freshness vs filings:** compares SEC's filing history with the facts API to find filers whose newer 10-Q has not been published as structured data.
 
+**CI:** GitHub Actions runs `dbt run` and `dbt test` on every pull request against a small committed fixture of raw data for six companies (`ci/raw_fixture.duckdb`). It proves the SQL and tests are correct, not that live SEC data is fresh; that is the Airflow freshness monitor's job.
+
 ## Engineering notes: problems found and fixed
 
 - **Silent staleness in SEC's API.** A dozen filers had a filed Q2 10-Q whose XBRL facts were missing from `companyfacts`. Comparing it with the `submissions` endpoint proved the filings existed. The monitor now labels this as "awaiting SEC data" instead of showing stale ratios as current.
@@ -119,7 +123,6 @@ Other known limitations:
 
 ## Roadmap
 
-- GitHub Actions CI running `dbt build` and `dbt test` on every pull request.
 - Alerting on failed runs and on new freshness gaps.
 - A port of the same pipeline to Microsoft Fabric (Lakehouse and Warehouse, Data Factory, Power BI).
 
