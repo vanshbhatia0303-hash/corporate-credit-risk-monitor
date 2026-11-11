@@ -1,4 +1,4 @@
-﻿with spine as (select distinct cik, period_end from {{ ref('int_balance_quarterly') }} where concept = 'Assets'),
+with spine as (select distinct cik, period_end from {{ ref('int_balance_quarterly') }} where concept = 'Assets'),
 bal as (
 select cik, period_end,
 max(case when concept = 'Assets' then val end) as total_assets,
@@ -39,18 +39,21 @@ max(case when concept = 'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtr
 coalesce(max(case when concept = 'NetIncomeLoss' then val end), max(case when concept = 'ProfitLoss' then val end), max(case when concept = 'NetIncomeLossAvailableToCommonStockholdersBasic' then val end)) as net_income,
 max(case when concept = 'IncomeTaxExpenseBenefit' then val end) as income_tax,
 coalesce(max(case when concept = 'InterestExpense' then val end), max(case when concept = 'InterestExpenseDebt' then val end), max(case when concept = 'InterestAndDebtExpense' then val end), max(case when concept = 'InterestExpenseNonoperating' then val end), max(case when concept = 'InterestExpenseDebtExcludingAmortization' then val end), max(case when concept = 'InterestExpenseBorrowings' then val end), max(case when concept = 'InterestExpenseOperating' then val end)) as interest_expense,
-coalesce(max(case when concept = 'DepreciationDepletionAndAmortization' then val end), max(case when concept = 'DepreciationAndAmortization' then val end), max(case when concept = 'DepreciationAmortizationAndAccretionNet' then val end), max(case when concept = 'RealEstateInvestmentPropertyDepreciation' then val end), max(case when concept = 'Depreciation' then val end)) as depreciation_amortization
+coalesce(max(case when concept = 'DepreciationDepletionAndAmortization' then val end), max(case when concept = 'DepreciationAndAmortization' then val end), max(case when concept = 'DepreciationAmortizationAndAccretionNet' then val end), max(case when concept = 'RealEstateInvestmentPropertyDepreciation' then val end), max(case when concept = 'Depreciation' then val end)) as depreciation_amortization,
+greatest(coalesce(max(case when concept = 'ImpairmentOfRealEstate' then val end), 0), coalesce(max(case when concept = 'AssetImpairmentCharges' then val end), 0), coalesce(max(case when concept = 'ImpairmentOfLongLivedAssetsHeldForUse' then val end), 0)) as impairment,
+arg_max(val, abs(val)) filter (where concept in ('GainLossOnSaleOfProperties', 'GainsLossesOnSalesOfInvestmentRealEstate', 'GainLossOnDispositionOfAssets1', 'GainLossOnDispositionOfAssets', 'GainLossOnDispositionOfRealEstateDiscontinuedOperations')) as gain_on_sale
 from {{ ref('int_flow_quarterly') }} group by 1, 2
 ),
 j as (
-select s.cik, s.period_end, b.total_assets, b.cash, f.revenues, f.operating_income, f.pretax_income, f.net_income, f.income_tax, f.interest_expense, f.depreciation_amortization, d.debt_raw, d.method_raw
+select s.cik, s.period_end, b.total_assets, b.cash, f.revenues, f.operating_income, f.pretax_income, f.net_income, f.income_tax, f.interest_expense, f.depreciation_amortization, f.impairment, f.gain_on_sale, d.debt_raw, d.method_raw
 from spine s left join bal b using (cik, period_end) left join flow f using (cik, period_end) left join debt d using (cik, period_end)
 )
 select cast(cik as varchar) || '|' || cast(period_end as varchar) as quarter_id, * exclude (debt_raw, method_raw),
 case when debt_raw < 0.03 * total_assets then null else debt_raw end as total_debt,
 case when debt_raw is null then null when debt_raw < 0.03 * total_assets then 'rejected_under_3pct_of_assets' else method_raw end as debt_method,
-case when depreciation_amortization is null then null when operating_income is not null then operating_income + depreciation_amortization when pretax_income is not null and interest_expense is not null then pretax_income + interest_expense + depreciation_amortization when net_income is not null and interest_expense is not null then net_income + coalesce(income_tax, 0) + interest_expense + depreciation_amortization end as ebitda,
+case when depreciation_amortization is null then null
+ when operating_income is not null then operating_income + depreciation_amortization + coalesce(impairment, 0)
+ when pretax_income is not null and interest_expense is not null then pretax_income + interest_expense + depreciation_amortization + coalesce(impairment, 0) - coalesce(gain_on_sale, 0)
+ when net_income is not null and interest_expense is not null then net_income + coalesce(income_tax, 0) + interest_expense + depreciation_amortization + coalesce(impairment, 0) - coalesce(gain_on_sale, 0) end as ebitda,
 case when depreciation_amortization is null then null when operating_income is not null then 'operating_income+da' when pretax_income is not null and interest_expense is not null then 'pretax+interest+da' when net_income is not null and interest_expense is not null then case when income_tax is null then 'net_income+interest+da (tax=0)' else 'net_income+tax+interest+da' end end as ebitda_method
 from j
-
-
