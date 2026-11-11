@@ -1,0 +1,12 @@
+import os, duckdb
+src = os.environ.get("WAREHOUSE_PATH", "warehouse.duckdb")
+dst = os.path.join("ci", "raw_fixture.duckdb")
+os.makedirs("ci", exist_ok=True)
+if os.path.exists(dst): os.remove(dst)
+T = ("PLD", "O", "HST", "ARE", "KIM", "DEI")
+c = duckdb.connect(dst)
+c.sql(f"attach '{src}' as w (read_only)")
+c.sql("create schema raw")
+for t in ("companies", "facts", "filings"): c.sql(f"create table raw.{t} as select * from w.raw.{t} where ticker in {T}")
+print(c.sql("select (select count(*) from raw.companies) companies, (select count(*) from raw.facts) facts, (select count(*) from raw.filings) filings").fetchall())
+c.close()
