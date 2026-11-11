@@ -1,0 +1,28 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  dbt:
+    runs-on: ubuntu-latest
+    env:
+      DBT_PROFILES_DIR: ${{ github.workspace }}/dbt_project
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install dbt-core==1.12.5 dbt-duckdb==1.11.0
+      - name: Copy the raw-data fixture
+        run: cp ci/raw_fixture.duckdb "$RUNNER_TEMP/ci.duckdb"
+      - name: dbt run
+        working-directory: dbt_project
+        run: dbt run
+        env:
+          WAREHOUSE_PATH: ${{ runner.temp }}/ci.duckdb
+      - name: dbt test
+        working-directory: dbt_project
+        run: dbt test
+        env:
+          WAREHOUSE_PATH: ${{ runner.temp }}/ci.duckdb
